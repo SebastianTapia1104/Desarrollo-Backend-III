@@ -1,151 +1,161 @@
-# Banco XYZ — Backend for Frontend (BFF) + Batch
-
-Proyecto **Exp2 / Semana 4 (PBY2203)** — *Analizando el patrón arquitectónico Backend for Frontend (BFF)*.
-
-Continúa la modernización del Banco XYZ: los jobs Spring Batch migran `bank_legacy_data` a H2 y, sobre esos datos, se exponen **tres backends especializados** (Web, Móvil y Cajeros).
+# Banco XYZ — Exp2 Semana 5 (PBY2203)
+## Implementando el patrón arquitectónico Backend for Frontend (BFF)
 
 ## Objetivo
 
-1. Aplicar el patrón **BFF** para personalizar APIs por canal (web / móvil / ATM).
-2. Gestionar **autenticación y autorización** distintas por canal.
-3. Mantener la resiliencia batch (validaciones ItemProcessor + Skip/Retry) de la entrega anterior.
+Implementar el patrón **Backend for Frontend (BFF)** para el Banco XYZ, creando backends personalizados para tres canales (Web, Móvil y Cajeros), con autenticación/autorización por canal y seguridad HTTPS.
 
-## Estrategia BFF elegida
+Los datos se obtienen desde el legado [bank_legacy_data](https://github.com/KariVillagran/bank_legacy_data), previamente migrados a H2 por el proyecto batch.
 
-Se eligió la estrategia de la guía:
-
-> **Crear backends independientes por cada tipo de cliente** + **endpoints personalizados**
-
-En un mismo repositorio Spring Boot (continuidad del proyecto), cada canal tiene su propio paquete BFF, sus DTOs/respuestas y su rol de seguridad:
-
-| Canal | Paquete | Prefijo API | Usuario Basic | Rol | Respuesta |
-|-------|---------|-------------|---------------|-----|-----------|
-| Web | `bff.web` | `/bff/web/**` | `web` / `web123` | `CHANNEL_WEB` | Completa (métricas, anomalías, auditoría) |
-| Móvil | `bff.mobile` | `/bff/mobile/**` | `mobile` / `mobile123` | `CHANNEL_MOBILE` | Liviana (pocos campos) |
-| Cajero | `bff.atm` | `/bff/atm/**` | `atm` / `atm123` | `CHANNEL_ATM` | Crítica (saldo/retiro + PIN `X-ATM-PIN: 1234`) |
-
-El núcleo compartido (`core.service.BankDataService`) lee la BD cargada por Batch; **cada BFF adapta** qué expone (Adapter/Strategy de la guía).
-
-## Requisitos
-
-- Java 17+
-- Maven Wrapper (`mvnw` / `mvnw.cmd`)
-
-## Estructura del código
+## Estructura de la entrega
 
 ```
-src/main/java/com/banco/xyz/
+.
+├── README.md                 # Documentación única de la entrega
+├── evidencias/               # Evidencias de ejecución
+│   ├── evidencia_bff.txt
+│   └── evidencia_batch_resumen.txt
+├── xyz/                      # Proyecto Spring Batch (solo carga de datos)
+└── xyz-bff/                  # Proyecto BFF (APIs Web / Móvil / ATM)
+```
+
+## Separación de responsabilidades
+
+| Proyecto | Rol |
+|----------|-----|
+| `xyz` | Solo **Spring Batch**: migra CSV → H2. No expone APIs BFF. |
+| `xyz-bff` | Solo **BFF**: APIs HTTPS por canal. No ejecuta jobs batch. |
+
+Ambos comparten la misma base H2 en archivo: `xyz/data/bankxyz`.
+
+---
+
+## Proyecto `xyz` (Batch)
+
+### Qué hace
+- Lee CSV de transacciones, intereses y estados de cuenta.
+- Valida/normaliza con ItemProcessors.
+- Aplica Skip/Retry/BackOff.
+- Persiste en H2 para que el BFF consulte.
+
+### Cómo ejecutar
+```bash
+cd xyz
+.\mvnw.cmd -DskipTests spring-boot:run
+```
+La app es non-web y termina al finalizar los jobs.
+
+### Estructura relevante
+```
+xyz/src/main/java/com/banco/xyz/
 ├── XyzApplication.java
-├── batch/                 # Jobs Spring Batch (semanas 1–3)
-│   ├── processor/         # Validaciones ItemProcessor
-│   ├── policy/            # SkipPolicy + RetryPolicy + Decider
-│   └── ...
-├── bff/
-│   ├── web/WebBffController.java
-│   ├── mobile/MobileBffController.java
-│   ├── atm/AtmBffController.java
-│   └── security/BffSecurityConfig.java
-├── core/service/BankDataService.java
+├── batch/          # jobs, processors, policies, listeners
 └── domain/
 ```
 
-## Endpoints BFF
+---
 
-### Web (payload completo)
+## Proyecto `xyz-bff` (Semana 5)
+
+### Estrategia BFF elegida
+Se eligió **backends/endpoints personalizados por tipo de cliente**:
+
+- Equipo pequeño → un proyecto BFF, con canales separados.
+- Cada frontend tiene necesidades distintas (payload completo vs liviano vs operaciones críticas).
+- Facilita mantenimiento y extensión sin tres repositorios independientes.
+
+### Canales
+
+| Canal | Prefijo | Usuario | Password | Rol | Características |
+|-------|---------|---------|----------|-----|-----------------|
+| Web | `/bff/web/**` | `web` | `web123` | `CHANNEL_WEB` | Respuestas completas |
+| Móvil | `/bff/mobile/**` | `mobile` | `mobile123` | `CHANNEL_MOBILE` | Respuestas livianas |
+| ATM | `/bff/atm/**` | `atm` | `atm123` | `CHANNEL_ATM` | Saldo/retiro + PIN por cuenta |
+
+### Endpoints
+
+**Web**
 - `GET /bff/web/dashboard`
 - `GET /bff/web/transacciones`
 - `GET /bff/web/intereses`
 - `GET /bff/web/cuentas/{id}/estado-anual`
 
-### Móvil (payload liviano)
+**Móvil**
 - `GET /bff/mobile/home?limit=5`
 - `GET /bff/mobile/cuentas` → solo `id`, `saldo`, `tipo`
 - `GET /bff/mobile/cuentas/{id}/resumen`
 
-### ATM (operaciones críticas)
+**ATM**
 - `GET /bff/atm/ping`
-- `GET /bff/atm/saldo/{id}` + header `X-ATM-PIN: 1234`
-- `POST /bff/atm/retiro` body `{"id":1,"monto":10}` + `X-ATM-PIN: 1234`
+- `GET /bff/atm/saldo/{id}` + header `X-ATM-PIN`
+- `POST /bff/atm/retiro` + header `X-ATM-PIN`
 
-`{id}` es la PK técnica de `cuentas_con_interes` (única), no el `cuenta_id` legacy (puede repetirse).
+`{id}` = PK técnica de `cuentas_con_interes`.
 
-## Cómo ejecutar
+### Seguridad
+- **HTTPS** en puerto `8443` (keystore PKCS12 en `xyz-bff/src/main/resources/keystore/`).
+- **Autenticación** HTTP Basic por canal.
+- **Autorización** por rol (un canal no puede llamar a otro → 403).
+- **PIN ATM** validado **por cuenta** (no PIN fijo global).  
+  Regla de prueba: `PIN = últimos 4 dígitos de cuentaId` (ej. `cuentaId=106` → `0106`).
 
+### DTOs tipados
+Las respuestas usan records tipados por canal (no `Map` genéricos).
+
+### Estructura relevante
+```
+xyz-bff/src/main/java/com/banco/xyz/bff/
+├── XyzBffApplication.java
+├── web/WebBffController.java
+├── mobile/MobileBffController.java
+├── atm/AtmBffController.java
+├── security/BffSecurityConfig.java
+├── security/AtmPinService.java
+└── service/BankDataQueryService.java
+```
+
+### Cómo ejecutar
 ```bash
+# 1) Primero cargar datos con batch
 cd xyz
 .\mvnw.cmd -DskipTests spring-boot:run
+
+# 2) Luego levantar BFF
+cd ../xyz-bff
+.\mvnw.cmd -DskipTests spring-boot:run
 ```
-
-Al arrancar:
-
-1. Ejecuta los 3 jobs batch (carga H2).
-2. Deja el servidor HTTP en `http://localhost:8080` para los BFF.
-
-Propiedades útiles (`application.properties`):
-
-| Propiedad | Default | Uso |
-|-----------|---------|-----|
-| `bank.batch.run-on-startup` | `true` | Corre migración al iniciar |
-| `bank.batch.exit-after-jobs` | `false` | `false` = deja viva la API BFF |
-| `bank.batch.compare-params` | `false` | Comparación gridSize (semana 3) |
+Base URL: `https://localhost:8443`
 
 ### Ejemplos curl
-
 ```bash
 # Web
-curl -u web:web123 http://localhost:8080/bff/web/dashboard
+curl -k -u web:web123 https://localhost:8443/bff/web/dashboard
 
 # Mobile
-curl -u mobile:mobile123 http://localhost:8080/bff/mobile/home?limit=3
+curl -k -u mobile:mobile123 "https://localhost:8443/bff/mobile/home?limit=3"
 
-# ATM
-curl -u atm:atm123 -H "X-ATM-PIN: 1234" http://localhost:8080/bff/atm/saldo/1
-curl -u atm:atm123 -H "X-ATM-PIN: 1234" -H "Content-Type: application/json" ^
-  -d "{\"id\":1,\"monto\":10}" http://localhost:8080/bff/atm/retiro
+# ATM (id=1, cuentaId=106 → PIN 0106)
+curl -k -u atm:atm123 -H "X-ATM-PIN: 0106" https://localhost:8443/bff/atm/saldo/1
+
+# Cross-channel (debe responder 403)
+curl -k -u web:web123 https://localhost:8443/bff/mobile/home
 ```
+`-k` se usa porque el certificado es autofirmado (entorno local/académico).
 
-Un usuario de un canal **no** puede llamar otro (HTTP 403).
+---
 
-### Tests (validación + tolerancia a fallos)
+## Evidencias
 
-```bash
-.\mvnw.cmd test
-```
-
-Incluye `ItemProcessorValidationTest` y `FaultTolerancePolicyTest`.
-
-## Corrección semana anterior (pauta S3)
-
-### 1) Transformaciones y validaciones en ItemProcessor
-
-Casos cubiertos y omitidos vía `InvalidDataException` + `FileVerificationSkipper`:
-
-| Proceso | Errores omitidos | Transformaciones |
-|---------|------------------|------------------|
-| Transacciones | incompletos, id ≤ 0, tipo `invalid`/`desconocido`, duplicados | normaliza tipo; **marca anomalía** si monto ≤ 0 (no omite) |
-| Intereses | incompletos, nombre `Unknown`, edad ∉ 18–100, saldo ≤ 0, tipo `-1`, duplicados | calcula tasa/interés/saldo; filtra `hipoteca`/`unknown` (return null) |
-| Estados anuales | incompletos, tipo `pago`, monto ≤ 0 | `depósito`→`deposito`; descripción vacía; clasifica INGRESO/EGRESO |
-
-### 2) Políticas de reintento y tolerancia a fallos
-
-| Política | Escenarios |
-|----------|------------|
-| **SkipPolicy** | `InvalidDataException`, `FlatFileParseException`, `DateTimeParseException`, `NumberFormatException`, `IllegalArgumentException` (límite 2000) |
-| **RetryPolicy** | Fallos transitorios de BD: `TransientDataAccessException`, `CannotGetJdbcConnectionException`, `QueryTimeoutException`, deadlock/lock, optimistic locking, `RecoverableDataAccessException`, `DataAccessResourceFailureException` (3 reintentos) |
-| **BackOff** | Exponencial 80ms ×2, tope 800ms |
-| **Decider** | Reejecuta PartitionStep si el manager falla; `COMPLETED_WITH_SKIPS` si hubo omisiones |
-
-## Evidencia
+Carpeta `evidencias/`:
 
 | Archivo | Contenido |
 |---------|-----------|
-| `evidencia_bff.txt` | Llamadas a las 3 APIs BFF + 403 cross-channel |
-| `output/errores.csv` | Omisiones batch |
-| `evidencia_ejecucion.txt` | (opcional) salida batch previa |
+| `evidencia_bff.txt` | Ejecución HTTPS de Web/Móvil/ATM, PIN inválido (401), cross-channel (403) |
+| `evidencia_batch_resumen.txt` | Resumen del batch como soporte de datos |
 
-## Propuesta técnica (resumen)
+---
 
-- **BFF**: tres backends lógicos independientes (`web` / `mobile` / `atm`) sobre un core de datos.
-- **Seguridad**: HTTP Basic + roles por canal; ATM exige PIN adicional.
-- **Datos**: Spring Batch → H2 → consultas JDBC del core → proyección distinta por BFF.
-- **Resiliencia batch**: Skip + Retry + BackOff + Decider + listeners de error/perf.
+## Requisitos
+
+- Java 17+
+- Maven Wrapper incluido en ambos proyectos (`mvnw` / `mvnw.cmd`)

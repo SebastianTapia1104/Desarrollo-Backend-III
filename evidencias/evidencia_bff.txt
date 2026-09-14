@@ -1,0 +1,63 @@
+﻿===== EVIDENCIA BFF Banco XYZ (Semana 5) =====
+Fecha: 2026-09-09T13:34:34-03:00
+Base URL: https://localhost:8443 (HTTPS)
+Proyecto: xyz-bff (separado de Spring Batch)
+
+--- 1) BFF ATM ping (user=atm) ---
+Comando: curl.exe -k -s -u atm:atm123 https://localhost:8443/bff/atm/ping
+Status: HTTP/1.1 200 
+{"canal":"ATM","estado":"OK","operaciones":["consulta-saldo","retiro"]}
+
+--- 2) BFF WEB dashboard (user=web, payload completo) ---
+Comando: curl.exe -k -s -u web:web123 https://localhost:8443/bff/web/dashboard
+Status: HTTP/1.1 200 
+{"canal":"WEB","descripcion":"Panel completo para navegador","resumen":{"totalTransacciones":476,"transaccionesAnomalas":89,"cuentasConInteres":183,"movimientosAnuales":657},"cuentas":[{"id":1,"cuentaId":106,"nombre":"Jane Smith","saldoInicial":12000.00,"edad":40,"tipo":"prestamo","tasaInteres":0.0150,"interesCalculado":180.00,"saldoFinal":12180.00},{"id":2,"cuentaId":142,"nombre":"Bob Johnson","saldoInicial":7000.00,"edad":25,"tipo":"ahorro","tasaInteres":0.0100,"interesCalculado":70.00,"saldoFinal":7070.00},{"id":3,"cuentaId":135,"nombre":"John Doe","saldoInicial":12000.00,"edad":40,"tipo":"prestamo","tasaInteres":0.0150,"interesCalculado":180.00,"saldoFinal":12180.00},{"id":4,"cuentaId":106,"nombre":"Charlie Green","saldoInicial":8000.00,"edad":25,"tipo":"prestamo","tasaInteres":0.0150,"interesCalculado":120.00,"saldoFinal":8120.00},{"id":5,"cuentaId":121,"nombre":"Alice Brown","saldo... [truncado]
+
+--- 3) BFF WEB transacciones (tipadas con anomalias) ---
+Comando: curl.exe -k -s -u web:web123 https://localhost:8443/bff/web/transacciones
+Status: HTTP/1.1 200 
+{"canal":"WEB","total":476,"incluyeAnomalias":true,"incluyeObservaciones":true,"data":[{"id":589,"fecha":"2024-12-30","monto":800.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":408,"fecha":"2024-12-30","monto":-200.00,"tipo":"debito","anomalia":true,"observacion":"Monto negativo detectado"},{"id":144,"fecha":"2024-12-30","monto":3000.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":33,"fecha":"2024-12-30","monto":1500.00,"tipo":"credito","anomalia":false,"observacion":"OK"},{"id":627,"fecha":"2024-12-29","monto":700.00,"tipo":"credito","anomalia":false,"observacion":"OK"},{"id":194,"fecha":"2024-12-29","monto":-200.00,"tipo":"credito","anomalia":true,"observacion":"Monto negativo detectado"},{"id":886,"fecha":"2024-12-27","monto":1200.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":380,"fecha":"2024-12-26","monto":1200.00,"tipo":"debito","anomali... [truncado]
+
+--- 4) BFF MOBILE home (user=mobile, liviano limit=3) ---
+Comando: curl.exe -k -s -u mobile:mobile123 https://localhost:8443/bff/mobile/home?limit=3
+Status: HTTP/1.1 200 
+{"canal":"MOBILE","cuentasActivas":183,"txRecientes":3,"items":[{"id":589,"fecha":"2024-12-30","monto":800.00,"tipo":"debito"},{"id":408,"fecha":"2024-12-30","monto":-200.00,"tipo":"debito"},{"id":144,"fecha":"2024-12-30","monto":3000.00,"tipo":"debito"}]}
+
+--- 5) BFF MOBILE cuentas (solo id/saldo/tipo) ---
+Comando: curl.exe -k -s -u mobile:mobile123 https://localhost:8443/bff/mobile/cuentas
+Status: HTTP/1.1 200 
+{"canal":"MOBILE","total":183,"campos":["id","saldo","tipo"],"data":[{"id":1,"saldo":12180.00,"tipo":"prestamo"},{"id":2,"saldo":7070.00,"tipo":"ahorro"},{"id":3,"saldo":12180.00,"tipo":"prestamo"},{"id":4,"saldo":8120.00,"tipo":"prestamo"},{"id":5,"saldo":8080.00,"tipo":"ahorro"},{"id":6,"saldo":12180.00,"tipo":"prestamo"},{"id":7,"saldo":7105.00,"tipo":"prestamo"},{"id":8,"saldo":10150.00,"tipo":"prestamo"},{"id":9,"saldo":12180.00,"tipo":"prestamo"},{"id":10,"saldo":12180.00,"tipo":"prestamo"},{"id":11,"saldo":7070.00,"tipo":"ahorro"},{"id":12,"saldo":10100.00,"tipo":"ahorro"},{"id":13,"saldo":8080.00,"tipo":"ahorro"},{"id":14,"saldo":8080.00,"tipo":"ahorro"},{"id":15,"saldo":10100.00,"tipo":"ahorro"},{"id":16,"saldo":5075.00,"tipo":"prestamo"},{"id":17,"saldo":5075.00,"tipo":"prestamo"},{"id":18,"saldo":10150.00,"tipo":"prestamo"},{"id":19,"saldo":12120.00,"tipo":"ahorro"},{"id":20,"... [truncado]
+
+--- 6) BFF ATM saldo id=1 PIN por cuenta (cuentaId=106 -> 0106) ---
+Comando: curl.exe -k -s -u atm:atm123 -H X-ATM-PIN: 0106 https://localhost:8443/bff/atm/saldo/1
+Status: HTTP/1.1 200 
+{"canal":"ATM","id":1,"cuentaId":106,"saldoDisponible":12180.00,"moneda":"CLP"}
+
+--- 7) BFF ATM saldo PIN incorrecto 1234 (espera 401) ---
+Comando: curl.exe -k -s -u atm:atm123 -H X-ATM-PIN: 1234 https://localhost:8443/bff/atm/saldo/1
+Status: HTTP/1.1 401 
+{"canal":"ATM","error":"PIN invalido para la cuenta"}
+
+--- 8) BFF ATM retiro 10 con PIN valido ---
+Comando: curl.exe -k -s -u atm:atm123 -H X-ATM-PIN: 0106 -H Content-Type: application/json -d {\"id\":1,\"monto\":10} -X POST https://localhost:8443/bff/atm/retiro
+Status: HTTP/1.1 200 
+{"canal":"ATM","operacion":"RETIRO_OK","data":{"id":1,"cuentaId":106,"montoRetirado":10,"saldoAnterior":12180.00,"saldoActual":12170.00}}
+
+--- 9) Cross-channel web->mobile (espera 403) ---
+Comando: curl.exe -k -s -u web:web123 https://localhost:8443/bff/mobile/home
+Status: HTTP/1.1 403 
+{"timestamp":"2026-09-09T16:34:36.440Z","status":403,"error":"Forbidden","path":"/bff/mobile/home"}
+
+--- 10) Cross-channel mobile->web (espera 403) ---
+Comando: curl.exe -k -s -u mobile:mobile123 https://localhost:8443/bff/web/dashboard
+Status: HTTP/1.1 403 
+{"timestamp":"2026-09-09T16:34:36.612Z","status":403,"error":"Forbidden","path":"/bff/web/dashboard"}
+
+--- Notas de cumplimiento Semana 5 ---
+- Tres BFF independientes: /bff/web, /bff/mobile, /bff/atm
+- Optimizacion: Web completa vs Mobile liviana vs ATM critica
+- Auth/autorizacion por canal con roles CHANNEL_WEB/MOBILE/ATM
+- HTTPS + certificado local (keystore PKCS12)
+- PIN ATM validado por cuenta (no PIN global fijo)
+- DTOs tipados (records) en respuestas
+- Batch y BFF en aplicaciones separadas

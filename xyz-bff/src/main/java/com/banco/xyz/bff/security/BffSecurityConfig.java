@@ -14,14 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Autenticación/autorización específica por canal BFF.
- * <ul>
- *   <li>WEB → rol CHANNEL_WEB</li>
- *   <li>MOBILE → rol CHANNEL_MOBILE</li>
- *   <li>ATM → rol CHANNEL_ATM (+ PIN en header X-ATM-PIN para operaciones)</li>
- * </ul>
- */
 @Configuration
 @EnableWebSecurity
 public class BffSecurityConfig {

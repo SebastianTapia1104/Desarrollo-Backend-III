@@ -1,0 +1,15 @@
+﻿===== EVIDENCIA BATCH (soporte para BFF) =====
+Proyecto: xyz (Spring Batch)
+Rol: carga datos legado a H2 para que xyz-bff pueda consultarlos.
+
+Comando:
+  cd xyz
+  .\mvnw.cmd -DskipTests spring-boot:run
+
+Resultado tipico de produccion:
+- reporteTransaccionesDiariasJob: 476 filas (con anomalias marcadas)
+- calculoInteresesMensualesJob: cuentas con interes calculado
+- estadosCuentaAnualesJob: movimientos anuales validos
+- Base H2: xyz/data/bankxyz
+
+Nota: la evidencia principal de Semana 5 (patron BFF) esta en evidencia_bff.txt.
