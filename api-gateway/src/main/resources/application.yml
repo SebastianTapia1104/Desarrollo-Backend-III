@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: ms-transacciones
+              uri: http://localhost:8081
+              predicates:
+                - Path=/transacciones/**
+            - id: ms-intereses
+              uri: http://localhost:8082
+              predicates:
+                - Path=/intereses/**
+            - id: ms-cuentas
+              uri: http://localhost:8083
+              predicates:
+                - Path=/cuentas/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

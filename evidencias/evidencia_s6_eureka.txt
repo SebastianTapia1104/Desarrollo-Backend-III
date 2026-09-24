@@ -1,0 +1,115 @@
+﻿<applications>
+  <versions__delta>1</versions__delta>
+  <apps__hashcode>UP_3_</apps__hashcode>
+  <application>
+    <name>MS-TRANSACCIONES</name>
+    <instance>
+      <instanceId>localhost:ms-transacciones:8081</instanceId>
+      <hostName>192.168.56.1</hostName>
+      <app>MS-TRANSACCIONES</app>
+      <ipAddr>192.168.56.1</ipAddr>
+      <status>UP</status>
+      <overriddenstatus>UNKNOWN</overriddenstatus>
+      <port enabled="true">8081</port>
+      <securePort enabled="false">443</securePort>
+      <countryId>1</countryId>
+      <dataCenterInfo class="com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo">
+        <name>MyOwn</name>
+      </dataCenterInfo>
+      <leaseInfo>
+        <renewalIntervalInSecs>5</renewalIntervalInSecs>
+        <durationInSecs>90</durationInSecs>
+        <registrationTimestamp>1790280563917</registrationTimestamp>
+        <lastRenewalTimestamp>1790280658874</lastRenewalTimestamp>
+        <evictionTimestamp>0</evictionTimestamp>
+        <serviceUpTimestamp>1790280563917</serviceUpTimestamp>
+      </leaseInfo>
+      <metadata>
+        <management.port>8081</management.port>
+      </metadata>
+      <homePageUrl>http://192.168.56.1:8081/</homePageUrl>
+      <statusPageUrl>http://192.168.56.1:8081/actuator/info</statusPageUrl>
+      <healthCheckUrl>http://192.168.56.1:8081/actuator/health</healthCheckUrl>
+      <vipAddress>ms-transacciones</vipAddress>
+      <secureVipAddress>ms-transacciones</secureVipAddress>
+      <isCoordinatingDiscoveryServer>false</isCoordinatingDiscoveryServer>
+      <lastUpdatedTimestamp>1790280563917</lastUpdatedTimestamp>
+      <lastDirtyTimestamp>1790280563860</lastDirtyTimestamp>
+      <actionType>ADDED</actionType>
+    </instance>
+  </application>
+  <application>
+    <name>MS-INTERESES</name>
+    <instance>
+      <instanceId>localhost:ms-intereses:8082</instanceId>
+      <hostName>192.168.56.1</hostName>
+      <app>MS-INTERESES</app>
+      <ipAddr>192.168.56.1</ipAddr>
+      <status>UP</status>
+      <overriddenstatus>UNKNOWN</overriddenstatus>
+      <port enabled="true">8082</port>
+      <securePort enabled="false">443</securePort>
+      <countryId>1</countryId>
+      <dataCenterInfo class="com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo">
+        <name>MyOwn</name>
+      </dataCenterInfo>
+      <leaseInfo>
+        <renewalIntervalInSecs>5</renewalIntervalInSecs>
+        <durationInSecs>90</durationInSecs>
+        <registrationTimestamp>1790280554324</registrationTimestamp>
+        <lastRenewalTimestamp>1790280659295</lastRenewalTimestamp>
+        <evictionTimestamp>0</evictionTimestamp>
+        <serviceUpTimestamp>1790280554325</serviceUpTimestamp>
+      </leaseInfo>
+      <metadata>
+        <management.port>8082</management.port>
+      </metadata>
+      <homePageUrl>http://192.168.56.1:8082/</homePageUrl>
+      <statusPageUrl>http://192.168.56.1:8082/actuator/info</statusPageUrl>
+      <healthCheckUrl>http://192.168.56.1:8082/actuator/health</healthCheckUrl>
+      <vipAddress>ms-intereses</vipAddress>
+      <secureVipAddress>ms-intereses</secureVipAddress>
+      <isCoordinatingDiscoveryServer>false</isCoordinatingDiscoveryServer>
+      <lastUpdatedTimestamp>1790280554325</lastUpdatedTimestamp>
+      <lastDirtyTimestamp>1790280554162</lastDirtyTimestamp>
+      <actionType>ADDED</actionType>
+    </instance>
+  </application>
+  <application>
+    <name>MS-CUENTAS</name>
+    <instance>
+      <instanceId>localhost:ms-cuentas:8083</instanceId>
+      <hostName>192.168.56.1</hostName>
+      <app>MS-CUENTAS</app>
+      <ipAddr>192.168.56.1</ipAddr>
+      <status>UP</status>
+      <overriddenstatus>UNKNOWN</overriddenstatus>
+      <port enabled="true">8083</port>
+      <securePort enabled="false">443</securePort>
+      <countryId>1</countryId>
+      <dataCenterInfo class="com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo">
+        <name>MyOwn</name>
+      </dataCenterInfo>
+      <leaseInfo>
+        <renewalIntervalInSecs>5</renewalIntervalInSecs>
+        <durationInSecs>90</durationInSecs>
+        <registrationTimestamp>1790280563867</registrationTimestamp>
+        <lastRenewalTimestamp>1790280658804</lastRenewalTimestamp>
+        <evictionTimestamp>0</evictionTimestamp>
+        <serviceUpTimestamp>1790280563867</serviceUpTimestamp>
+      </leaseInfo>
+      <metadata>
+        <management.port>8083</management.port>
+      </metadata>
+      <homePageUrl>http://192.168.56.1:8083/</homePageUrl>
+      <statusPageUrl>http://192.168.56.1:8083/actuator/info</statusPageUrl>
+      <healthCheckUrl>http://192.168.56.1:8083/actuator/health</healthCheckUrl>
+      <vipAddress>ms-cuentas</vipAddress>
+      <secureVipAddress>ms-cuentas</secureVipAddress>
+      <isCoordinatingDiscoveryServer>false</isCoordinatingDiscoveryServer>
+      <lastUpdatedTimestamp>1790280563867</lastUpdatedTimestamp>
+      <lastDirtyTimestamp>1790280563805</lastDirtyTimestamp>
+      <actionType>ADDED</actionType>
+    </instance>
+  </application>
+</applications>

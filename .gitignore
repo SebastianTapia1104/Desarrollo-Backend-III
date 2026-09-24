@@ -1,0 +1,8 @@
+target/
+evidencias/logs/
+xyz/data/
+xyz/output/
+*.zip
+.idea/
+*.iml
+.vscode/

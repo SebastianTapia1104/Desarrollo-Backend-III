@@ -1,0 +1,43 @@
+﻿=== CONSULTA TRANSACCIONES ===
+[{"id":589,"fecha":"2024-12-30","monto":800.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":408,"fecha":"2024-12-30","monto":-200.00,"tipo":"debito","anomalia":true,"observacion":"Monto negativo detectado"},{"id":144,"fecha":"2024-12-30","monto":3000.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":33,"fecha":"2024-12-30","monto":1500.00,"tipo":"credito","anomalia":false,"observacion":"OK"},{"id":627,"fecha":"2024-12-29","monto":700.00,"tipo":"credito","anomalia":false,"observacion":"OK"},{"id":194,"fecha":"2024-12-29","monto":-200.00,"tipo":"credito","anomalia":true,"observacion":"Monto negativo detectado"},{"id":886,"fecha":"2024-12-27","monto":1200.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":380,"fecha":"2024-12-26","monto":1200.00,"tipo":"debito","anomalia":false,"observacion":"OK"},{"id":95,"fecha":"2024-12-22","monto":1000.00,"tipo":"credito","anomalia":false,"observacion":"OK"},{"id":850,"fecha":"2024-12-20","monto":3000.00,"tipo":"credito","anomalia":false,"observacion":"OK"}]
+=== CONSULTA ESTADOS ===
+[{"id":1,"cuentaId":103,"fecha":"2024-03-08","transaccion":"deposito","monto":3000.00,"descripcion":"Retiro parcial"},{"id":2,"cuentaId":104,"fecha":"2024-05-26","transaccion":"deposito","monto":2500.00,"descripcion":"Ingreso navide├▒o"},{"id":3,"cuentaId":109,"fecha":"2024-10-21","transaccion":"deposito","monto":2500.00,"descripcion":"Ingreso navide├▒o"},{"id":4,"cuentaId":115,"fecha":"2024-07-12","transaccion":"compra","monto":1500.00,"descripcion":"Sin descripcion"},{"id":5,"cuentaId":106,"fecha":"2024-03-23","transaccion":"compra","monto":2000.00,"descripcion":"Compra en tienda"},{"id":6,"cuentaId":115,"fecha":"2024-06-19","transaccion":"compra","monto":2000.00,"descripcion":"Sin descripcion"},{"id":7,"cuentaId":110,"fecha":"2024-11-25","transaccion":"compra","monto":2000.00,"descripcion":"Ingreso mensual"},{"id":8,"cuentaId":116,"fecha":"2024-08-20","transaccion":"deposito","monto":1500.00,"descripcion":"Sin descripcion"},{"id":9,"cuentaId":115,"fecha":"2024-10-24","transaccion":"retiro","monto":1500.00,"descripcion":"Sin descripcion"},{"id":10,"cuentaId":119,"fecha":"2024-09-11","transaccion":"compra","monto":2000.00,"descripcion":"Compra en tienda"}]
+=== RETIRO 202 ===
+HTTP/1.1 202 
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+date: Thu, 24 Sep 2026 20:09:55 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+Content-Type: application/json
+Content-Length: 146
+
+{"id":1,"eventId":"94d6c288-aeb0-407f-b346-87f9a63a37b8","cuentaId":1,"monto":10.00,"estado":"PENDIENTE","detalle":"publicado en cuentas.debitar"}
+=== ESTADO FINAL RETIRO 1 ===
+{"id":1,"eventId":"94d6c288-aeb0-407f-b346-87f9a63a37b8","cuentaId":1,"monto":10.00,"estado":"CONFIRMADO","detalle":"OK"}
+=== DUPLICADO 202 ===
+{"id":2,"eventId":"395b71e3-d2d4-46c7-836d-e1a101ebf020","cuentaId":1,"monto":10.00,"estado":"PENDIENTE","detalle":"publicado en cuentas.debitar"}
+{"id":2,"eventId":"395b71e3-d2d4-46c7-836d-e1a101ebf020","cuentaId":1,"monto":10.00,"estado":"CONFIRMADO","detalle":"OK"}
+=== COMPENSACION 202 ===
+{"id":3,"eventId":"3ab7d64f-ce18-417b-95c6-db2ee9983c13","cuentaId":1,"monto":10.00,"estado":"PENDIENTE","detalle":"publicado en cuentas.debitar"}
+{"id":3,"eventId":"3ab7d64f-ce18-417b-95c6-db2ee9983c13","cuentaId":1,"monto":10.00,"estado":"COMPENSADO","detalle":"COMPENSATED"}
+=== DOS CONSUMIDORES EN cuentas.debitar (puertos 8083 y 8084) ===
+Instancia A (pid 19548) proceso 3 debitos. Instancia B (pid 21040) proceso 7 debitos.
+La cola reparte el trabajo entre ambas instancias del mismo microservicio.
+
+=== LOG SAGA ===
+2026-09-24T17:09:55.904-03:00  INFO 24196 --- [ms-transacciones] [http-nio-8081-exec-3] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=94d6c288-aeb0-407f-b346-87f9a63a37b8 cuentaId=1 monto=10
+2026-09-24T17:09:55.994-03:00  INFO 24196 --- [ms-transacciones] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar.respuesta eventId=94d6c288-aeb0-407f-b346-87f9a63a37b8 estado=CONFIRMADO
+2026-09-24T17:09:56.735-03:00  INFO 24196 --- [ms-transacciones] [http-nio-8081-exec-5] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=395b71e3-d2d4-46c7-836d-e1a101ebf020 cuentaId=1 monto=10
+2026-09-24T17:09:56.737-03:00  INFO 24196 --- [ms-transacciones] [http-nio-8081-exec-5] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=395b71e3-d2d4-46c7-836d-e1a101ebf020 duplicado=true
+2026-09-24T17:09:56.741-03:00  INFO 24196 --- [ms-transacciones] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar.respuesta eventId=395b71e3-d2d4-46c7-836d-e1a101ebf020 estado=CONFIRMADO
+2026-09-24T17:09:57.569-03:00  INFO 24196 --- [ms-transacciones] [http-nio-8081-exec-7] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=3ab7d64f-ce18-417b-95c6-db2ee9983c13 cuentaId=1 monto=10
+2026-09-24T17:09:57.578-03:00  INFO 24196 --- [ms-transacciones] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.compensar eventId=3ab7d64f-ce18-417b-95c6-db2ee9983c13 estado=COMPENSANDO
+2026-09-24T17:09:57.584-03:00  INFO 24196 --- [ms-transacciones] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar.respuesta eventId=3ab7d64f-ce18-417b-95c6-db2ee9983c13 estado=COMPENSADO
+2026-09-24T17:09:55.981-03:00  INFO 27272 --- [ms-cuentas] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=94d6c288-aeb0-407f-b346-87f9a63a37b8 resultado=RESULT;94d6c288-aeb0-407f-b346-87f9a63a37b8;0;7060.00;OK
+2026-09-24T17:09:56.737-03:00  INFO 27272 --- [ms-cuentas] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=395b71e3-d2d4-46c7-836d-e1a101ebf020 resultado=RESULT;395b71e3-d2d4-46c7-836d-e1a101ebf020;0;7050.00;OK
+2026-09-24T17:09:56.745-03:00  INFO 27272 --- [ms-cuentas] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=395b71e3-d2d4-46c7-836d-e1a101ebf020 resultado=DUPLICADO
+2026-09-24T17:09:57.573-03:00  INFO 27272 --- [ms-cuentas] [org.springframework.jms.JmsListenerEndpointContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=3ab7d64f-ce18-417b-95c6-db2ee9983c13 resultado=RESULT;3ab7d64f-ce18-417b-95c6-db2ee9983c13;0;7040.00;OK
+2026-09-24T17:09:57.581-03:00  INFO 27272 --- [ms-cuentas] [org.springframework.jms.JmsListenerEndpointContainer#1-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.compensar eventId=3ab7d64f-ce18-417b-95c6-db2ee9983c13 resultado=RESULT;3ab7d64f-ce18-417b-95c6-db2ee9983c13;0;7050.00;COMPENSATED

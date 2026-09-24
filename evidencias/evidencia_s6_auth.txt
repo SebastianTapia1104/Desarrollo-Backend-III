@@ -1,0 +1,63 @@
+﻿=== SIN CREDENCIALES 401 ===
+HTTP/1.1 401 
+WWW-Authenticate: Basic realm="Realm", charset="UTF-8"
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 0
+Date: Thu, 24 Sep 2026 20:09:54 GMT
+
+=== WEB GET 200 ===
+HTTP/1.1 200 
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+date: Thu, 24 Sep 2026 20:09:54 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+Content-Type: application/json
+Content-Length: 69
+
+{"servicio":"ms-transacciones","configSource":"config-server-nativo"}
+=== WEB POST 403 ===
+HTTP/1.1 403 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Thu, 24 Sep 2026 20:09:55 GMT
+
+{"timestamp":"2026-09-24T20:09:55.011Z","status":403,"error":"Forbidden","path":"/transacciones/retiros"}
+=== MS DIRECTO 401 ===
+HTTP/1.1 401 
+WWW-Authenticate: Basic realm="Realm", charset="UTF-8"
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 0
+Date: Thu, 24 Sep 2026 20:09:55 GMT
+
+=== MS DIRECTO WEB 200 ===
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Content-Length: 63
+Date: Thu, 24 Sep 2026 20:09:55 GMT
+
+{"configSource":"config-server-nativo","servicio":"ms-cuentas"}

@@ -1,0 +1,11 @@
+﻿=== LOS TRES RESPONDEN MIENTRAS LA DEPENDENCIA ESTA ARRIBA ===
+transacciones: {"respuesta":"{\"servicio\":\"ms-cuentas\",\"estado\":\"UP\"}","circuito":"CLOSED","estado":"OK"}
+intereses: {"circuito":"CLOSED","respuesta":"{\"estado\":\"UP\",\"servicio\":\"ms-transacciones\"}","estado":"OK"}
+cuentas: {"circuito":"CLOSED","respuesta":"{\"servicio\":\"ms-intereses\",\"estado\":\"UP\"}","estado":"OK"}
+=== CIRCUITO ABIERTO EN ms-intereses Y ms-cuentas (dependencia inalcanzable) ===
+intereses: {"circuito":"OPEN","detalle":"ResourceAccessException","estado":"FALLBACK"}
+intereses 2: {"circuito":"OPEN","detalle":"CallNotPermittedException","estado":"FALLBACK"}
+cuentas: {"circuito":"OPEN","detalle":"ResourceAccessException","estado":"FALLBACK"}
+=== SE DETIENE ms-cuentas ===
+transacciones con ms-cuentas detenido: {"detalle":"ResourceAccessException","circuito":"OPEN","estado":"FALLBACK"}
+transacciones segundo intento: {"detalle":"CallNotPermittedException","circuito":"OPEN","estado":"FALLBACK"}
