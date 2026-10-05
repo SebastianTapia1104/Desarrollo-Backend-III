@@ -24,17 +24,19 @@ Los datos se obtienen desde el legado [bank_legacy_data](https://github.com/Kari
 ├── ms-cuentas/               # Puerto 8083, participante de la saga
 ├── evidencias/
 ├── xyz/                      # Spring Batch: CSV -> H2
-└── xyz-bff/                  # BFF HTTPS de la semana 5
+├── xyz-backend/              # Backend HTTP dueño de H2, puerto 8090
+└── xyz-bff/                  # BFF HTTPS de la semana 5. Llama al backend con RestClient
 ```
 
 ## Separación de responsabilidades
 
 | Proyecto | Rol |
 |----------|-----|
-| `xyz` | Solo **Spring Batch**: migra CSV → H2. No expone APIs BFF. |
-| `xyz-bff` | Solo **BFF**: APIs HTTPS por canal. No ejecuta jobs batch. |
+| `xyz` | Solo **Spring Batch**: migra CSV → H2. No expone APIs. |
+| `xyz-backend` | Único servicio que abre H2. Expone los datos por HTTP. |
+| `xyz-bff` | Canales Web, Móvil y ATM. No usa `JdbcTemplate`. Agrega las respuestas con `RestClient`. |
 
-Ambos comparten la misma base H2 en archivo: `xyz/data/bankxyz`.
+La base H2 en archivo (`xyz/data/bankxyz`) la escribe el batch y la lee solo `xyz-backend`.
 
 ---
 
@@ -44,7 +46,7 @@ Ambos comparten la misma base H2 en archivo: `xyz/data/bankxyz`.
 - Lee CSV de transacciones, intereses y estados de cuenta.
 - Valida/normaliza con ItemProcessors.
 - Aplica Skip/Retry/BackOff.
-- Persiste en H2 para que el BFF consulte.
+- Persiste en H2 para que `xyz-backend` lo exponga por HTTP.
 
 ### Cómo ejecutar
 ```bash
@@ -119,20 +121,27 @@ xyz-bff/src/main/java/com/banco/xyz/bff/
 ├── atm/AtmBffController.java
 ├── security/BffSecurityConfig.java
 ├── security/AtmPinService.java
-└── service/BankDataQueryService.java
+└── service/BankDataQueryService.java   # RestClient hacia xyz-backend
 ```
+
+Los tres canales llaman a `xyz-backend` con `RestClient`. El dashboard web no lee la base: pide `GET /api/resumen` y `GET /api/cuentas` y arma la respuesta con esas dos integraciones. El estado de cuenta anual pide la cuenta y, en otra llamada, `GET /api/cuentas/{id}/movimientos`. El cajero consulta el saldo y envía el retiro con `POST /api/retiros`.
+
+Eso queda demostrado en `evidencias/evidencia_bff.txt`: el backend responde en el puerto 8090, el canal web agrega resumen y cuentas, y el log del BFF registra cada `Integracion HTTP`.
 
 ### Cómo ejecutar
 ```bash
-# 1) Primero cargar datos con batch
+# 1) Cargar datos con batch
 cd xyz
 .\mvnw.cmd -DskipTests spring-boot:run
 
-# 2) Luego levantar BFF
-cd ../xyz-bff
-.\mvnw.cmd -DskipTests spring-boot:run
+# 2) Backend dueño de H2 (desde la raíz del repositorio)
+cd ..
+.\mvnw.cmd -f xyz-backend\pom.xml -DskipTests spring-boot:run
+
+# 3) BFF
+.\mvnw.cmd -f xyz-bff\pom.xml -DskipTests spring-boot:run
 ```
-Base URL: `https://localhost:8443`
+Backend: `http://localhost:8090`. BFF: `https://localhost:8443`.
 
 ### Ejemplos curl
 ```bash
@@ -158,13 +167,16 @@ Carpeta `evidencias/`:
 
 | Archivo | Contenido |
 |---------|-----------|
-| `evidencia_bff.txt` | Ejecución HTTPS de Web/Móvil/ATM, PIN inválido (401), cross-channel (403) |
+| `evidencia_bff.txt` | H2 solo en `xyz-backend`. Canales por RestClient, 401, 403 y log de integración HTTP |
 | `evidencia_batch_resumen.txt` | Resumen del batch como soporte de datos |
 | `evidencia_s6_config_server.txt` | Config Server entregando la config de un microservicio |
 | `evidencia_s6_eureka.txt` | Tres microservicios registrados |
 | `evidencia_s6_auth.txt` | 401 sin credenciales, 200 con rol y 403 por autorización |
 | `evidencia_s6_resilience.txt` | Circuit breaker OPEN y respuesta FALLBACK |
 | `evidencia_s7_saga_jms.txt` | Retiro confirmado, duplicado ignorado y compensación |
+| `evidencia_s8_oauth.txt` | Token OAuth2, 401 sin token, 200 con scope de lectura y 403 sin permiso de retiro |
+| `evidencia_s8_docker.txt` | Imágenes y contenedores levantados con Docker Compose |
+| `evidencia_s8_resiliencia_jms.txt` | Retiro, compensación y circuit breaker dentro de Docker |
 
 ---
 
@@ -172,6 +184,49 @@ Carpeta `evidencias/`:
 
 - Java 17+
 - Maven Wrapper en la raíz (`mvnw.cmd`) y en `xyz` / `xyz-bff`
+- Docker Desktop, para la ejecución de la semana 8
+
+---
+
+## Semana 8 — OAuth2 y Docker
+
+La seguridad de las APIs pasa de HTTP Basic a **OAuth 2.0 client credentials**. `auth-server` emite un JWT y el gateway y los microservicios lo validan. No hace falta AWS: todo corre en Docker local.
+
+Clientes:
+
+| Cliente | Secret | Scopes |
+|---------|--------|--------|
+| `web` | `web123` | `cuentas.read` |
+| `atm` | `atm123` | `cuentas.read`, `retiros.write` |
+| `servicio` | `servicio123` | `interno` (llamadas entre microservicios) |
+
+### Cómo ejecutar
+
+```powershell
+.\mvnw.cmd -DskipTests package
+.\xyz\mvnw.cmd -DskipTests -f xyz\pom.xml package
+docker compose up --build
+```
+
+Compose levanta H2 por TCP, corre el batch una vez, y después Config Server, Eureka, el Authorization Server, los tres microservicios y el gateway.
+
+### Token y llamadas
+
+```powershell
+# Token de lectura
+curl.exe -s -u web:web123 -d grant_type=client_credentials http://localhost:9000/oauth2/token
+
+# 401 sin token
+curl.exe -s -i http://localhost:8080/transacciones/origen-config
+
+# 200 con el token de web
+curl.exe -s -H "Authorization: Bearer TOKEN" http://localhost:8080/transacciones/origen-config
+
+# 403: web no puede retirar
+curl.exe -s -i -H "Authorization: Bearer TOKEN_WEB" -H "Content-Type: application/json" -d "{\"cuentaId\":1,\"monto\":10}" http://localhost:8080/transacciones/retiros
+```
+
+El retiro, el duplicado y la compensación se hacen igual que en la semana 7, usando el token de `atm`.
 
 ---
 
@@ -232,13 +287,9 @@ java -jar api-gateway\target\api-gateway-0.0.1-SNAPSHOT.jar
 
 Espera a que cada proceso imprima que arrancó antes de lanzar el siguiente. `ms-transacciones` abre el broker en `tcp://127.0.0.1:61616`. Los tres microservicios leen su puerto, la base H2 y los umbrales de Resilience4j desde el Config Server.
 
-### Usuarios
+### Usuarios OAuth2
 
-| Usuario | Password | Puede |
-|---------|----------|--------|
-| `web` | `web123` | GET de los tres servicios. No puede retirar. |
-| `mobile` | `mobile123` | GET de los tres servicios. |
-| `atm` | `atm123` | GET y POST de retiros. |
+Los canales ya no entran con HTTP Basic. Piden un token a `auth-server` (puerto 9000), como se describe en la sección de la semana 8. `web` solo lee. `atm` también puede retirar.
 
 ### Ejemplos
 

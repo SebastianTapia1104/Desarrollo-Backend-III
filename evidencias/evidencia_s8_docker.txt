@@ -1,0 +1,22 @@
+﻿=== IMAGENES ===
+8-desarrollobackendiii-auth-server:latest
+8-desarrollobackendiii-config-server:latest
+8-desarrollobackendiii-api-gateway:latest
+8-desarrollobackendiii-h2:latest
+8-desarrollobackendiii-eureka-server:latest
+8-desarrollobackendiii-ms-transacciones:latest
+8-desarrollobackendiii-ms-cuentas:latest
+8-desarrollobackendiii-ms-intereses:latest
+8-desarrollobackendiii-batch:latest
+
+=== COMPOSE PS ===
+SERVICE            STATUS                     PORTS
+api-gateway        Up 49 seconds              0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+auth-server        Up 57 seconds (healthy)    0.0.0.0:9000->9000/tcp, [::]:9000->9000/tcp
+batch              Exited (0) 7 minutes ago   
+config-server      Up 7 minutes (healthy)     0.0.0.0:8888->8888/tcp, [::]:8888->8888/tcp
+eureka-server      Up 7 minutes (healthy)     0.0.0.0:8761->8761/tcp, [::]:8761->8761/tcp
+h2                 Up 7 minutes (healthy)     0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp
+ms-cuentas         Up 46 seconds              0.0.0.0:8083->8083/tcp, [::]:8083->8083/tcp
+ms-intereses       Up 46 seconds              0.0.0.0:8082->8082/tcp, [::]:8082->8082/tcp
+ms-transacciones   Up 46 seconds              0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp, 0.0.0.0:61616->61616/tcp, [::]:61616->61616/tcp

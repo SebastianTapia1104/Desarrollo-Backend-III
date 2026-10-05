@@ -12,7 +12,7 @@ public class MsTransaccionesApplication {
 		broker.setPersistent(false);
 		broker.setUseJmx(false);
 		broker.setUseShutdownHook(false);
-		broker.addConnector("tcp://127.0.0.1:61616");
+		broker.addConnector("tcp://0.0.0.0:61616");
 		broker.start();
 		SpringApplication.run(MsTransaccionesApplication.class, args);
 	}

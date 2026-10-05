@@ -3,113 +3,116 @@ package com.banco.xyz.bff.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.json.JsonParser;
+import org.springframework.boot.json.JsonParserFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClient;
 
 @Service
 public class BankDataQueryService {
 
-	private final JdbcTemplate jdbc;
+	private static final Logger log = LoggerFactory.getLogger(BankDataQueryService.class);
 
-	public BankDataQueryService(JdbcTemplate jdbc) {
-		this.jdbc = jdbc;
+	private final RestClient backend;
+	private final String baseUrl;
+	private final JsonParser json = JsonParserFactory.getJsonParser();
+
+	public BankDataQueryService(RestClient backend, @Value("${bank.backend.base-url}") String baseUrl) {
+		this.backend = backend;
+		this.baseUrl = baseUrl;
 	}
 
 	public Summary summary() {
-		return new Summary(
-				count("SELECT COUNT(*) FROM transacciones_diarias"),
-				count("SELECT COUNT(*) FROM transacciones_diarias WHERE anomalia = TRUE"),
-				count("SELECT COUNT(*) FROM cuentas_con_interes"),
-				count("SELECT COUNT(*) FROM estados_cuenta_anuales"));
+		return get("/api/resumen", Summary.class);
 	}
 
 	public List<WebTransaction> transactions() {
-		return jdbc.query("""
-				SELECT id, fecha, monto, tipo, anomalia, observacion
-				FROM transacciones_diarias
-				ORDER BY fecha DESC, id DESC
-				""", (rs, rowNum) -> new WebTransaction(
-				rs.getLong("id"),
-				rs.getDate("fecha").toLocalDate(),
-				rs.getBigDecimal("monto"),
-				rs.getString("tipo"),
-				rs.getBoolean("anomalia"),
-				rs.getString("observacion")));
+		return getList("/api/transacciones", new ParameterizedTypeReference<List<WebTransaction>>() {
+		});
 	}
 
 	public List<MobileTransaction> recentTransactions(int limit) {
-		return jdbc.query("""
-				SELECT id, fecha, monto, tipo
-				FROM transacciones_diarias
-				ORDER BY fecha DESC, id DESC
-				LIMIT ?
-				""", (rs, rowNum) -> new MobileTransaction(
-				rs.getLong("id"),
-				rs.getDate("fecha").toLocalDate(),
-				rs.getBigDecimal("monto"),
-				rs.getString("tipo")), limit);
+		log.info("Integracion HTTP GET {}/api/transacciones/recientes?limit={}", baseUrl, limit);
+		return backend.get().uri("/api/transacciones/recientes?limit={limit}", limit).retrieve()
+				.body(new ParameterizedTypeReference<List<MobileTransaction>>() {
+				});
 	}
 
 	public List<Account> accounts() {
-		return jdbc.query("""
-				SELECT id, cuenta_id, nombre, saldo_inicial, edad, tipo,
-				       tasa_interes, interes_calculado, saldo_final
-				FROM cuentas_con_interes
-				ORDER BY id
-				""", (rs, rowNum) -> new Account(
-				rs.getLong("id"),
-				rs.getLong("cuenta_id"),
-				rs.getString("nombre"),
-				rs.getBigDecimal("saldo_inicial"),
-				rs.getInt("edad"),
-				rs.getString("tipo"),
-				rs.getBigDecimal("tasa_interes"),
-				rs.getBigDecimal("interes_calculado"),
-				rs.getBigDecimal("saldo_final")));
+		return getList("/api/cuentas", new ParameterizedTypeReference<List<Account>>() {
+		});
 	}
 
 	public Optional<Account> accountById(long id) {
-		return accounts().stream().filter(c -> c.id() == id).findFirst();
+		log.info("Integracion HTTP GET {}/api/cuentas/{}", baseUrl, id);
+		try {
+			Account account = backend.get().uri("/api/cuentas/{id}", id).retrieve().body(Account.class);
+			return Optional.ofNullable(account);
+		}
+		catch (HttpStatusCodeException ex) {
+			if (ex.getStatusCode().value() == 404) {
+				return Optional.empty();
+			}
+			throw ex;
+		}
 	}
 
-	public List<Movement> yearlyMovements(long cuentaId) {
-		return jdbc.query("""
-				SELECT fecha, transaccion, monto, descripcion, clasificacion
-				FROM estados_cuenta_anuales
-				WHERE cuenta_id = ?
-				ORDER BY fecha
-				""", (rs, rowNum) -> new Movement(
-				rs.getDate("fecha").toLocalDate(),
-				rs.getString("transaccion"),
-				rs.getBigDecimal("monto"),
-				rs.getString("descripcion"),
-				rs.getString("clasificacion")), cuentaId);
+	public List<Movement> yearlyMovements(long id) {
+		log.info("Integracion HTTP GET {}/api/cuentas/{}/movimientos", baseUrl, id);
+		return backend.get().uri("/api/cuentas/{id}/movimientos", id).retrieve()
+				.body(new ParameterizedTypeReference<List<Movement>>() {
+				});
 	}
 
-	@Transactional
 	public Withdrawal withdraw(long id, BigDecimal amount) {
-		if (amount == null || amount.signum() <= 0) {
-			throw new IllegalArgumentException("Monto de retiro debe ser positivo");
+		log.info("Integracion HTTP POST {}/api/retiros id={}", baseUrl, id);
+		try {
+			return backend.post().uri("/api/retiros").body(Map.of("id", id, "monto", amount)).retrieve().body(Withdrawal.class);
 		}
-		Account account = accountById(id).orElseThrow(() -> new IllegalArgumentException("Cuenta no encontrada"));
-		if (account.saldoFinal().compareTo(amount) < 0) {
-			throw new IllegalStateException("Saldo insuficiente");
+		catch (HttpStatusCodeException ex) {
+			String mensaje = mensaje(ex);
+			if (ex.getStatusCode().value() == 409) {
+				throw new IllegalStateException(mensaje);
+			}
+			if (ex.getStatusCode().is4xxClientError()) {
+				throw new IllegalArgumentException(mensaje);
+			}
+			throw ex;
 		}
-		BigDecimal newBalance = account.saldoFinal().subtract(amount);
-		jdbc.update("UPDATE cuentas_con_interes SET saldo_final = ? WHERE id = ?", newBalance, id);
-		jdbc.update("""
-				INSERT INTO estados_cuenta_anuales (cuenta_id, fecha, transaccion, monto, descripcion, clasificacion)
-				VALUES (?, ?, 'retiro', ?, 'Retiro ATM', 'EGRESO')
-				""", account.cuentaId(), LocalDate.now(), amount);
-		return new Withdrawal(id, account.cuentaId(), amount, account.saldoFinal(), newBalance);
 	}
 
-	private int count(String sql) {
-		Integer count = jdbc.queryForObject(sql, Integer.class);
-		return count == null ? 0 : count;
+	private <T> T get(String path, Class<T> type) {
+		log.info("Integracion HTTP GET {}{}", baseUrl, path);
+		return backend.get().uri(path).retrieve().body(type);
+	}
+
+	private <T> T getList(String path, ParameterizedTypeReference<T> type) {
+		log.info("Integracion HTTP GET {}{}", baseUrl, path);
+		return backend.get().uri(path).retrieve().body(type);
+	}
+
+	private String mensaje(HttpStatusCodeException ex) {
+		try {
+			Map<String, Object> body = json.parseMap(ex.getResponseBodyAsString());
+			Object error = body.get("error");
+			if (error != null) {
+				return error.toString();
+			}
+		}
+		catch (Exception ignored) {
+			HttpStatusCode status = ex.getStatusCode();
+			return status.toString();
+		}
+		return ex.getStatusCode().toString();
 	}
 
 	public record Summary(int totalTransacciones, int transaccionesAnomalas, int cuentasConInteres, int movimientosAnuales) {

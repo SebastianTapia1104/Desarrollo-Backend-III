@@ -4,6 +4,8 @@ server:
 bank:
   config-source: config-server-nativo
   peer-service: ms-intereses
+  oauth:
+    token-uri: http://localhost:9000/oauth2/token
 
 spring:
   datasource:
@@ -16,6 +18,11 @@ spring:
       mode: never
   activemq:
     broker-url: failover:(tcp://127.0.0.1:61616)?initialReconnectDelay=500&maxReconnectDelay=2000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000
 
 eureka:
   client:

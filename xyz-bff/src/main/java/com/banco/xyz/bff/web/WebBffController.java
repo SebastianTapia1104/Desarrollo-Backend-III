@@ -40,7 +40,7 @@ public class WebBffController {
 	@GetMapping("/cuentas/{id}/estado-anual")
 	public ResponseEntity<WebAnnualStateResponse> estadoAnual(@PathVariable long id) {
 		return service.accountById(id).map(account -> {
-			List<BankDataQueryService.Movement> movements = service.yearlyMovements(account.cuentaId());
+			List<BankDataQueryService.Movement> movements = service.yearlyMovements(account.id());
 			return ResponseEntity.ok(new WebAnnualStateResponse("WEB", account, movements.size(), movements));
 		}).orElseGet(() -> ResponseEntity.notFound().build());
 	}

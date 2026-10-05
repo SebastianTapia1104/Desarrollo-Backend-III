@@ -1,0 +1,23 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-server:9000
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: ms-transacciones
+              uri: http://ms-transacciones:8081
+              predicates:
+                - Path=/transacciones/**
+            - id: ms-intereses
+              uri: http://ms-intereses:8082
+              predicates:
+                - Path=/intereses/**
+            - id: ms-cuentas
+              uri: http://ms-cuentas:8083
+              predicates:
+                - Path=/cuentas/**

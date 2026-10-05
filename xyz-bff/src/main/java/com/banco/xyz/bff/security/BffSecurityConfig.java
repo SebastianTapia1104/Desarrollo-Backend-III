@@ -23,15 +23,13 @@ public class BffSecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/h2-console/**").permitAll()
 						.requestMatchers("/actuator/health", "/error").permitAll()
 						.requestMatchers("/bff/web/**").hasRole("CHANNEL_WEB")
 						.requestMatchers("/bff/mobile/**").hasRole("CHANNEL_MOBILE")
 						.requestMatchers(HttpMethod.GET, "/bff/atm/ping").hasRole("CHANNEL_ATM")
 						.requestMatchers("/bff/atm/**").hasRole("CHANNEL_ATM")
 						.anyRequest().authenticated())
-				.httpBasic(Customizer.withDefaults())
-				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+				.httpBasic(Customizer.withDefaults());
 		return http.build();
 	}
 

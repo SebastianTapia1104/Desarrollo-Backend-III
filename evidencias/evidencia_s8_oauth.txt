@@ -1,0 +1,65 @@
+﻿=== TOKEN WEB ===
+access_token recibido, longitud 662
+=== 401 SIN TOKEN ===
+HTTP/1.1 401 
+WWW-Authenticate: Bearer resource_metadata="http://localhost:8080/.well-known/oauth-protected-resource"
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 0
+Date: Fri, 02 Oct 2026 01:33:06 GMT
+
+=== WEB GET TRANSACCIONES ===
+HTTP/1.1 200 
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+date: Fri, 02 Oct 2026 01:33:07 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+Content-Type: application/json
+Content-Length: 69
+
+{"configSource":"config-server-nativo","servicio":"ms-transacciones"}
+=== WEB GET INTERESES ===
+HTTP/1.1 200 
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+date: Fri, 02 Oct 2026 01:33:07 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+Content-Type: application/json
+Content-Length: 65
+
+{"servicio":"ms-intereses","configSource":"config-server-nativo"}
+=== WEB GET CUENTAS ===
+HTTP/1.1 200 
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+date: Fri, 02 Oct 2026 01:33:07 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+Content-Type: application/json
+Content-Length: 63
+
+{"configSource":"config-server-nativo","servicio":"ms-cuentas"}
+=== WEB POST RETIRO ===
+HTTP/1.1 403 
+WWW-Authenticate: Bearer error="insufficient_scope", error_description="The request requires higher privileges than provided by the access token.", error_uri="https://tools.ietf.org/html/rfc6750#section-3.1"
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Length: 0
+Date: Fri, 02 Oct 2026 01:33:07 GMT
+

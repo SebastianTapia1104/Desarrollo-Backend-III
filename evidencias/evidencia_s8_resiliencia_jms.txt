@@ -1,0 +1,37 @@
+﻿=== RETIRO ===
+HTTP/1.1 202 
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+date: Fri, 02 Oct 2026 01:33:08 GMT
+expires: 0
+pragma: no-cache
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-xss-protection: 0
+Content-Type: application/json
+Content-Length: 146
+
+{"id":1,"eventId":"22e13e62-6e5b-4e59-a9cc-9bc8b8bcba58","cuentaId":1,"monto":10.00,"estado":"PENDIENTE","detalle":"publicado en cuentas.debitar"}
+FINAL: {"id":1,"eventId":"22e13e62-6e5b-4e59-a9cc-9bc8b8bcba58","cuentaId":1,"monto":10.00,"estado":"CONFIRMADO","detalle":"OK"}
+=== DUPLICADO ===
+{"id":2,"eventId":"1f26e9f0-d617-429d-93f0-7e99a5a728e2","cuentaId":1,"monto":10.00,"estado":"PENDIENTE","detalle":"publicado en cuentas.debitar"}
+FINAL: {"id":2,"eventId":"1f26e9f0-d617-429d-93f0-7e99a5a728e2","cuentaId":1,"monto":10.00,"estado":"CONFIRMADO","detalle":"OK"}
+=== COMPENSACION ===
+{"id":3,"eventId":"01841756-9f04-436e-8ec2-fb3c581fbb66","cuentaId":1,"monto":10.00,"estado":"PENDIENTE","detalle":"publicado en cuentas.debitar"}
+FINAL: {"id":3,"eventId":"01841756-9f04-436e-8ec2-fb3c581fbb66","cuentaId":1,"monto":10.00,"estado":"COMPENSADO","detalle":"COMPENSATED"}
+=== RESILIENCIA ===
+1: {"estado":"FALLBACK","detalle":"ResourceAccessException","circuito":"OPEN"}
+2: {"estado":"FALLBACK","detalle":"CallNotPermittedException","circuito":"OPEN"}
+=== LOG SAGA ===
+ms-cuentas-1        | 2026-10-02T01:33:08.127Z  INFO 1 --- [ms-cuentas] [ntContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=22e13e62-6e5b-4e59-a9cc-9bc8b8bcba58 resultado=RESULT;22e13e62-6e5b-4e59-a9cc-9bc8b8bcba58;0;7060.00;OK
+ms-cuentas-1        | 2026-10-02T01:33:08.238Z  INFO 1 --- [ms-cuentas] [ntContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=1f26e9f0-d617-429d-93f0-7e99a5a728e2 resultado=RESULT;1f26e9f0-d617-429d-93f0-7e99a5a728e2;0;7050.00;OK
+ms-cuentas-1        | 2026-10-02T01:33:08.251Z  INFO 1 --- [ms-cuentas] [ntContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=1f26e9f0-d617-429d-93f0-7e99a5a728e2 resultado=DUPLICADO
+ms-cuentas-1        | 2026-10-02T01:33:08.846Z  INFO 1 --- [ms-cuentas] [ntContainer#0-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.debitar eventId=01841756-9f04-436e-8ec2-fb3c581fbb66 resultado=RESULT;01841756-9f04-436e-8ec2-fb3c581fbb66;0;7040.00;OK
+ms-cuentas-1        | 2026-10-02T01:33:08.858Z  INFO 1 --- [ms-cuentas] [ntContainer#1-1] c.banco.xyz.cuentas.SagaCuentasListener  : SAGA cola=cuentas.compensar eventId=01841756-9f04-436e-8ec2-fb3c581fbb66 resultado=RESULT;01841756-9f04-436e-8ec2-fb3c581fbb66;0;7050.00;COMPENSATED
+ms-transacciones-1  | 2026-10-02T01:33:08.028Z  INFO 1 --- [ms-transacciones] [nio-8081-exec-2] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=22e13e62-6e5b-4e59-a9cc-9bc8b8bcba58 cuentaId=1 monto=10
+ms-transacciones-1  | 2026-10-02T01:33:08.142Z  INFO 1 --- [ms-transacciones] [ntContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar.respuesta eventId=22e13e62-6e5b-4e59-a9cc-9bc8b8bcba58 estado=CONFIRMADO
+ms-transacciones-1  | 2026-10-02T01:33:08.231Z  INFO 1 --- [ms-transacciones] [nio-8081-exec-3] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=1f26e9f0-d617-429d-93f0-7e99a5a728e2 cuentaId=1 monto=10
+ms-transacciones-1  | 2026-10-02T01:33:08.232Z  INFO 1 --- [ms-transacciones] [nio-8081-exec-3] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=1f26e9f0-d617-429d-93f0-7e99a5a728e2 duplicado=true
+ms-transacciones-1  | 2026-10-02T01:33:08.240Z  INFO 1 --- [ms-transacciones] [ntContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar.respuesta eventId=1f26e9f0-d617-429d-93f0-7e99a5a728e2 estado=CONFIRMADO
+ms-transacciones-1  | 2026-10-02T01:33:08.839Z  INFO 1 --- [ms-transacciones] [nio-8081-exec-5] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar eventId=01841756-9f04-436e-8ec2-fb3c581fbb66 cuentaId=1 monto=10
+ms-transacciones-1  | 2026-10-02T01:33:08.851Z  INFO 1 --- [ms-transacciones] [ntContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.compensar eventId=01841756-9f04-436e-8ec2-fb3c581fbb66 estado=COMPENSANDO
+ms-transacciones-1  | 2026-10-02T01:33:08.861Z  INFO 1 --- [ms-transacciones] [ntContainer#0-1] c.banco.xyz.transacciones.RetiroService  : SAGA cola=cuentas.debitar.respuesta eventId=01841756-9f04-436e-8ec2-fb3c581fbb66 estado=COMPENSADO

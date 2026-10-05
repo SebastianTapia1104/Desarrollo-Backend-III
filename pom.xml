@@ -14,10 +14,12 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>banco-xyz-cloud</name>
-	<description>Semanas 6 y 7: Spring Cloud, seguridad y mensajeria JMS</description>
+	<description>Semanas 6 a 8: Spring Cloud, OAuth2, JMS y Docker</description>
 	<modules>
 		<module>config-server</module>
 		<module>eureka-server</module>
+		<module>auth-server</module>
+		<module>h2-server</module>
 		<module>api-gateway</module>
 		<module>ms-transacciones</module>
 		<module>ms-intereses</module>

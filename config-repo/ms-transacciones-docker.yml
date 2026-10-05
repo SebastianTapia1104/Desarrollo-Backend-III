@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:tcp://h2:9092/bankxyz;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+  activemq:
+    broker-url: tcp://127.0.0.1:61616
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-server:9000
+
+bank:
+  oauth:
+    token-uri: http://auth-server:9000/oauth2/token
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+logging:
+  file:
+    name: /tmp/ms-transacciones.log
