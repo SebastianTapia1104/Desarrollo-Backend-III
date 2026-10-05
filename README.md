@@ -1,7 +1,7 @@
 # Banco XYZ — PBY2203 Experiencia 3
 ## Semana 5 (BFF), Semana 6 (Spring Cloud) y Semana 7 (eventos JMS)
 
-Este repositorio continúa el Banco XYZ. La semana 5 expone un BFF por canal. Las semanas 6 y 7 agregan un ecosistema Spring Cloud local y una saga de retiros por JMS. No hace falta AWS: la configuración vive en `config-repo/` y el broker ActiveMQ arranca embebido en `ms-transacciones`.
+Este repositorio continúa el Banco XYZ. La semana 5 expone un BFF por canal. Las semanas 6 y 7 agregan un ecosistema Spring Cloud local y una saga de retiros por JMS. La configuración vive en `config-repo/` y el broker ActiveMQ arranca embebido en `ms-transacciones`.
 
 ## Objetivo
 
